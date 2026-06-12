@@ -12,17 +12,17 @@ export default function FeedbackScreen() {
         
         <View style={styles.btnRow}>
           <TouchableOpacity style={[styles.btn, styles.btnYes]}>
-            <Text style={styles.btnText}>✅ Yes, real emergency</Text>
+            <Text style={styles.btnTextYes}>✅ Yes, real emergency</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.btn, styles.btnNo]}>
-            <Text style={styles.btnText}>❌ False alarm</Text>
+            <Text style={styles.btnTextNo}>❌ False alarm</Text>
           </TouchableOpacity>
         </View>
 
         <Text style={styles.label}>What were you doing? (optional)</Text>
         <TextInput 
           style={styles.input} 
-          placeholderTextColor="#666" 
+          placeholderTextColor="#800000" 
           placeholder="e.g. running, dropped phone" 
         />
 
@@ -42,30 +42,33 @@ export default function FeedbackScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#FFFFFF', // White background
     padding: 20,
   },
   header: {
-    color: '#fff',
+    color: '#800000', // Maroon
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 20,
     marginTop: 20,
   },
   card: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: '#FFF9C4', // Soft Yellow
     padding: 20,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#EAE0A0'
   },
   cardTitle: {
-    color: '#8E8E93',
+    color: '#800000', // Maroon
     fontSize: 14,
     marginBottom: 15,
+    fontWeight: '600'
   },
   question: {
-    color: '#fff',
+    color: '#800000', // Maroon
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: 'bold',
     marginBottom: 20,
   },
   btnRow: {
@@ -77,33 +80,39 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
+    backgroundColor: '#FFFFFF', // White buttons inside yellow card
+    borderWidth: 1,
   },
   btnYes: {
-    backgroundColor: 'rgba(50, 215, 75, 0.2)',
-    borderWidth: 1,
     borderColor: '#32D74B',
   },
   btnNo: {
-    backgroundColor: 'rgba(255, 69, 58, 0.2)',
-    borderWidth: 1,
-    borderColor: '#FF453A',
+    borderColor: '#FF0000', // Red
   },
-  btnText: {
-    color: '#fff',
+  btnTextYes: {
+    color: '#32D74B',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: 'bold',
+  },
+  btnTextNo: {
+    color: '#FF0000', // Red
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   label: {
-    color: '#8E8E93',
+    color: '#800000', // Maroon
     fontSize: 14,
     marginBottom: 10,
+    fontWeight: '600'
   },
   input: {
-    backgroundColor: '#2C2C2E',
-    color: '#fff',
+    backgroundColor: '#FFFFFF', // White input
+    color: '#800000',
     padding: 15,
     borderRadius: 8,
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#EAE0A0'
   },
   actionRow: {
     flexDirection: 'row',
@@ -111,18 +120,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   skipText: {
-    color: '#8E8E93',
+    color: '#800000', // Maroon
     fontSize: 16,
+    fontWeight: 'bold'
   },
   doneBtn: {
-    backgroundColor: '#0A84FF',
+    backgroundColor: '#800000', // Maroon
     paddingHorizontal: 25,
     paddingVertical: 10,
     borderRadius: 8,
   },
   doneText: {
-    color: '#fff',
+    color: '#FFFFFF', // White
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
   }
 });

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { dbService } from '../services/DatabaseService';
 import { EventRecord } from '../types';
 
@@ -44,8 +44,8 @@ export default function HistoryScreen() {
 
 function getThreatColor(level: string) {
   switch (level) {
-    case 'CRITICAL': return '#FF0000';
-    case 'HIGH': return '#FF453A';
+    case 'CRITICAL': return '#FF0000'; // Red
+    case 'HIGH': return '#FF453A'; 
     case 'ELEVATED': return '#FF9F0A';
     case 'LOW_ALERT': return '#FFD60A';
     default: return '#32D74B';
@@ -55,21 +55,23 @@ function getThreatColor(level: string) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#FFFFFF', // White background
     padding: 20,
   },
   header: {
-    color: '#fff',
+    color: '#800000', // Maroon
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 20,
     marginTop: 20,
   },
   eventCard: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: '#FFF9C4', // Soft yellow
     padding: 15,
     borderRadius: 12,
     marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#EAE0A0'
   },
   eventHeader: {
     flexDirection: 'row',
@@ -78,9 +80,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   eventTime: {
-    color: '#fff',
+    color: '#800000', // Maroon
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: 'bold',
   },
   threatBadge: {
     paddingHorizontal: 8,
@@ -91,8 +93,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   detailText: {
-    color: '#8E8E93',
+    color: '#800000', // Maroon text for details
     fontSize: 14,
     marginTop: 4,
+    fontWeight: '500'
   }
 });

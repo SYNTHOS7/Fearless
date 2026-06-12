@@ -19,11 +19,11 @@ function TabNavigator() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        headerStyle: { backgroundColor: '#0A0A0F' },
-        headerTintColor: '#fff',
-        tabBarStyle: { backgroundColor: '#0A0A0F', borderTopColor: '#222' },
-        tabBarActiveTintColor: '#FF453A',
-        tabBarInactiveTintColor: '#8E8E93',
+        headerStyle: { backgroundColor: '#800000' }, // Maroon
+        headerTintColor: '#FFFFFF', // White
+        tabBarStyle: { backgroundColor: '#800000', borderTopColor: '#FFF9C4' }, // Maroon bar, Yellow top border
+        tabBarActiveTintColor: '#FFF9C4', // Yellow active
+        tabBarInactiveTintColor: '#FFFFFF', // White inactive
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: any = 'home';
           if (route.name === 'Dashboard') iconName = focused ? 'home' : 'home-outline';
@@ -45,8 +45,6 @@ function TabNavigator() {
 }
 
 export function AppNavigator() {
-  // Logic to determine if onboarding is needed would go here.
-  // For simplicity, we just stack it.
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>

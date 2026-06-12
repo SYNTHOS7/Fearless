@@ -16,11 +16,11 @@ export default function GraphsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#FFFFFF', // White background
     padding: 20,
   },
   header: {
-    color: '#fff',
+    color: '#800000', // Maroon
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 20,
@@ -28,20 +28,22 @@ const styles = StyleSheet.create({
   },
   graphPlaceholder: {
     flex: 1,
-    backgroundColor: '#1C1C1E',
+    backgroundColor: '#FFF9C4', // Soft Yellow
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    borderWidth: 1,
+    borderColor: '#EAE0A0'
   },
   placeholderText: {
-    color: '#32D74B',
+    color: '#800000', // Maroon
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
   },
   placeholderSub: {
-    color: '#8E8E93',
+    color: '#800000',
     fontSize: 14,
     textAlign: 'center',
   }

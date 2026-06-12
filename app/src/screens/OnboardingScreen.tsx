@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function OnboardingScreen({ navigation }: any) {
   return (
@@ -14,11 +15,15 @@ export default function OnboardingScreen({ navigation }: any) {
         <Text style={styles.step}>4. Add an Emergency Contact</Text>
       </View>
 
-      <TouchableOpacity 
-        style={styles.btn} 
-        onPress={() => navigation.replace('Main')}
-      >
-        <Text style={styles.btnText}>Start Setup (Mock)</Text>
+      <TouchableOpacity onPress={() => navigation.replace('Main')}>
+        <LinearGradient
+          colors={['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#9400D3']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.btn}
+        >
+          <Text style={styles.btnText}>Start Setup</Text>
+        </LinearGradient>
       </TouchableOpacity>
     </View>
   );
@@ -27,41 +32,47 @@ export default function OnboardingScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#FFFFFF', // White background
     padding: 30,
     justifyContent: 'center',
   },
   title: {
-    color: '#fff',
+    color: '#800000', // Maroon
     fontSize: 36,
     fontWeight: 'bold',
     marginBottom: 10,
   },
   subtitle: {
-    color: '#8E8E93',
+    color: '#800000', // Maroon
     fontSize: 18,
     marginBottom: 40,
+    fontWeight: '600'
   },
   steps: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: '#FFF9C4', // Soft Yellow
     padding: 20,
     borderRadius: 12,
     marginBottom: 40,
+    borderWidth: 1,
+    borderColor: '#EAE0A0'
   },
   step: {
-    color: '#fff',
+    color: '#800000', // Maroon
     fontSize: 16,
     marginBottom: 15,
+    fontWeight: '600'
   },
   btn: {
-    backgroundColor: '#32D74B',
     padding: 20,
     borderRadius: 16,
     alignItems: 'center',
   },
   btnText: {
-    color: '#000',
-    fontSize: 18,
-    fontWeight: 'bold',
+    color: '#FFFFFF', // White on Rainbow gradient
+    fontSize: 20,
+    fontWeight: '900',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: {width: -1, height: 1},
+    textShadowRadius: 10
   }
 });
