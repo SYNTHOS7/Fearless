@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
-export default function OnboardingScreen({ navigation }: any) {
+export default function OnboardingScreen({ navigation, onComplete }: any) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Welcome to SafeBand</Text>
@@ -15,7 +15,13 @@ export default function OnboardingScreen({ navigation }: any) {
         <Text style={styles.step}>4. Add an Emergency Contact</Text>
       </View>
 
-      <TouchableOpacity onPress={() => navigation.replace('Main')}>
+      <TouchableOpacity onPress={() => {
+        if (onComplete) {
+          onComplete();
+        } else if (navigation) {
+          navigation.replace('Main');
+        }
+      }}>
         <LinearGradient
           colors={['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#9400D3']}
           start={{ x: 0, y: 0 }}

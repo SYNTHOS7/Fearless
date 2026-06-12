@@ -131,3 +131,80 @@ export interface SensorLogRecord {
   jerk: number;
   anomaly_score: number;
 }
+
+// App-level Frontend/Business Types
+export enum StruggleStatus {
+  Normal = 0,
+  Struggle = 1,
+  Emergency = 2,
+}
+
+export enum AlertControl {
+  Cancel = 0,
+  Confirm = 1,
+  Reset = 2,
+}
+
+export type ConnectionStatus = 'disconnected' | 'scanning' | 'connecting' | 'connected';
+export type RiskStatus = 'safe' | 'elevated' | 'danger';
+export type SensitivityLevel = 1 | 2 | 3;
+
+export interface BleDevice {
+  id: string;
+  name: string;
+  rssi: number;
+}
+
+export interface StruggleEventPayload {
+  status: StruggleStatus;
+  confidence: number;
+  timestamp: string;
+}
+
+export interface BatteryEventPayload {
+  level: number;
+  timestamp: string;
+}
+
+export interface VerificationResult {
+  confidence: number;
+  motionConfidence: number;
+  audioConfidence: number;
+  timestamp: string;
+}
+
+export interface Contact {
+  id: string;
+  name: string;
+  phone: string;
+  relationship: string;
+  email?: string;
+  customMessage?: string;
+  notifyMethods?: ('sms' | 'push' | 'call')[];
+  hasApp?: boolean;
+  verified?: boolean;
+  priority?: number;
+}
+
+export interface Settings {
+  sensitivity: SensitivityLevel;
+  contextVerification: boolean;
+  audioVerification: boolean;
+  alertCountdown: number;
+  demoMode: boolean;
+}
+
+export interface AlertEvent {
+  id: string;
+  timestamp: string;
+  anomalyScore: number;
+  confidence: number;
+  durationMs: number;
+  motionPattern: string;
+  threatScore: number;
+  threatLevel: string;
+  outcome: string;
+  locationLabel?: string;
+  userActivity?: string;
+  dismissed?: boolean;
+}

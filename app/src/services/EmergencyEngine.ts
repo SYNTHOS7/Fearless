@@ -3,12 +3,13 @@ import * as SMS from 'expo-sms';
 import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import { dbService } from './DatabaseService';
+import storageService from './StorageService';
 
 type EmergencyState = 'IDLE' | 'PRE_ALERT' | 'EMERGENCY' | 'CANCELLED';
 
 export class EmergencyEngine {
   private state: EmergencyState = 'IDLE';
-  private countdownTimer: NodeJS.Timeout | null = null;
+  private countdownTimer: ReturnType<typeof setInterval> | null = null;
   private soundObject: Audio.Sound | null = null;
   private onStateChangeCallback: ((state: EmergencyState, remaining?: number) => void) | null = null;
 
@@ -92,7 +93,7 @@ export class EmergencyEngine {
     }
 
     // 3. Notify Contacts
-    const contacts = await dbService.getAllContacts();
+    const contacts = await storageService.getContacts();
     const phoneNumbers = contacts.map(c => c.phone);
     
     const message = `🚨 EMERGENCY ALERT from SafeBand\nPossible emergency detected at:\n${locationStr}\n${mapUrl}\n\nTime: ${new Date().toLocaleString()}\n\nTo confirm you received this: reply OK`;
