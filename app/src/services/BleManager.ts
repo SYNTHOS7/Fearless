@@ -44,7 +44,12 @@ class TinyEmitter {
     this.listeners = {};
   }
 }
-import { BleManager as RNBleManager, Device, Subscription } from 'react-native-ble-plx';
+import type { BleManager as RNBleManagerType, Device, Subscription } from 'react-native-ble-plx';
+
+let RNBleManager: any;
+if (Platform.OS !== 'web') {
+  RNBleManager = require('react-native-ble-plx').BleManager;
+}
 
 import type {
   BleDevice,
@@ -94,7 +99,7 @@ function clamp(value: number, min: number, max: number): number {
 
 class FearlessBleManager extends TinyEmitter {
   // --- BLE internals ---
-  private manager: RNBleManager | null = null;
+  private manager: RNBleManagerType | null = null;
   private connectedDevice: Device | null = null;
   private subscriptions: Subscription[] = [];
   private scanTimeout: ReturnType<typeof setTimeout> | null = null;
