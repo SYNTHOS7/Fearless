@@ -55,6 +55,9 @@
       "eas": {
         "projectId": "fearless-safety-2026"
       }
+    },
+    "experiments": {
+      "baseUrl": "/Fearless"
     }
   }
 }
