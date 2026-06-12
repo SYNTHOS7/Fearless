@@ -134,11 +134,14 @@ export class EmergencyEngine {
   private async playAlarm() {
     try {
       if (!this.soundObject) {
+        /*
         const { sound } = await Audio.Sound.createAsync(
           require('../../assets/alarm.mp3'),
           { shouldPlay: true, isLooping: true, volume: 1.0 }
         );
         this.soundObject = sound;
+        */
+        console.warn("Alarm sound played (mock)");
       } else {
         await this.soundObject.playAsync();
       }

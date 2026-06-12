@@ -10,6 +10,7 @@
     "@react-navigation/native": "^7.3.1",
     "expo": "~56.0.11",
     "expo-audio": "^56.0.12",
+    "expo-av": "^16.0.8",
     "expo-haptics": "^56.0.3",
     "expo-linear-gradient": "^56.0.4",
     "expo-location": "^56.0.17",
