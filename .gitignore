@@ -1,0 +1,50 @@
+# dependencies
+app/node_modules/
+
+# Expo
+app/.expo/
+app/dist/
+app/web-build/
+app/expo-env.d.ts
+
+# Native
+app/.kotlin/
+app/*.orig.*
+app/*.jks
+app/*.p8
+app/*.p12
+app/*.key
+app/*.mobileprovision
+
+# Metro
+app/.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# typescript
+app/*.tsbuildinfo
+
+# generated native folders
+app/ios/
+app/android/
+
+# PlatformIO / Firmware build files
+firmware/.pio/
+firmware/.clang_complete
+firmware/.gcc-flags.json
+firmware/.ccls-cache/
+firmware/.vscode/
+
+# IDE / OS files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.pem
+
+# Local env files
+.env
+.env*.local
