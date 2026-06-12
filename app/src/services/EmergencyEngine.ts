@@ -1,233 +1,124 @@
-import { Vibration } from 'react-native';
+import * as Location from 'expo-location';
+import * as SMS from 'expo-sms';
+import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
+import { dbService } from './DatabaseService';
 
-class TinyEmitter {
-  private listeners: { [event: string]: Function[] } = {};
+type EmergencyState = 'IDLE' | 'PRE_ALERT' | 'EMERGENCY' | 'CANCELLED';
 
-  on(event: string, callback: Function): void {
-    if (!this.listeners[event]) {
-      this.listeners[event] = [];
-    }
-    this.listeners[event].push(callback);
+export class EmergencyEngine {
+  private state: EmergencyState = 'IDLE';
+  private countdownTimer: NodeJS.Timeout | null = null;
+  private soundObject: Audio.Sound | null = null;
+  private onStateChangeCallback: ((state: EmergencyState, remaining?: number) => void) | null = null;
+
+  public setOnStateChange(callback: (state: EmergencyState, remaining?: number) => void) {
+    this.onStateChangeCallback = callback;
   }
 
-  off(event: string, callback: Function): void {
-    if (!this.listeners[event]) return;
-    this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
-  }
+  public async triggerPreAlert(eventId: number) {
+    if (this.state !== 'IDLE') return;
+    
+    this.state = 'PRE_ALERT';
+    let remaining = 15;
+    
+    this.notifyState(remaining);
+    this.startHaptics();
 
-  emit(event: string, ...args: any[]): void {
-    if (!this.listeners[event]) return;
-    for (const callback of this.listeners[event]) {
-      callback(...args);
-    }
-  }
-
-  removeAllListeners(): void {
-    this.listeners = {};
-  }
-}
-import bleManager from './BleManager';
-import contextVerifier from './ContextVerifier';
-import locationService from './LocationService';
-import smsService from './SmsService';
-import storageService from './StorageService';
-import type { AlertEvent, AlertType, Settings, Contact } from '../types';
-import { StruggleStatus, AlertControl } from '../types';
-
-// ─── Emergency Engine Singleton ──────────────────────────────────────────────
-
-class EmergencyEngine extends TinyEmitter {
-  private alertState: 'idle' | 'countdown' | 'alerting' = 'idle';
-  private countdownTimer: ReturnType<typeof setInterval> | null = null;
-  private countdownRemaining = 0;
-  private activeAlert: AlertEvent | null = null;
-
-  constructor() {
-    super();
-    // Listen to BleManager struggle updates
-    bleManager.on('struggleUpdate', this.handleStruggleUpdate.bind(this));
-  }
-
-  // ─── Event Handler from Wearable ───────────────────────────────────────────
-
-  private async handleStruggleUpdate(payload: { status: StruggleStatus; confidence: number }) {
-    if (this.alertState !== 'idle') return; // Already processing or alerting
-
-    // Trigger only on Struggle (1) or Emergency (2) status
-    if (payload.status === StruggleStatus.Struggle || payload.status === StruggleStatus.Emergency) {
-      console.log(`[EmergencyEngine] Wearable reported struggle! status=${payload.status}, confidence=${payload.confidence}`);
-      
-      const settings = await storageService.getSettings();
-      
-      // Perform phone verification if enabled
-      let phoneConfidence = 100;
-      if (settings.contextVerification) {
-        console.log('[EmergencyEngine] Performing phone context verification...');
-        const verifyResult = await contextVerifier.verify(
-          settings.audioVerification,
-          2000 // 2 seconds scan
-        );
-        phoneConfidence = verifyResult.confidence;
-        console.log(`[EmergencyEngine] Context verification finished. Phone confidence: ${phoneConfidence}%`);
-      }
-
-      // Combine confidence: wearable is primary (60%), phone is context (40%)
-      const combinedConfidence = settings.contextVerification
-        ? Math.round(payload.confidence * 0.6 + phoneConfidence * 0.4)
-        : payload.confidence;
-
-      console.log(`[EmergencyEngine] Combined Confidence: ${combinedConfidence}%`);
-
-      // If confidence exceeds threshold, start the emergency alert process
-      if (combinedConfidence >= 70) {
-        await this.startEmergencyFlow('struggle', combinedConfidence);
-      }
-    }
-  }
-
-  // ─── Emergency Flow Controls ────────────────────────────────────────────────
-
-  /**
-   * Start the countdown timer for dispatching the emergency alert.
-   */
-  private async startEmergencyFlow(type: AlertType, confidence: number) {
-    if (this.alertState !== 'idle') return;
-
-    const settings = await storageService.getSettings();
-    const duration = settings.alertCountdown;
-
-    this.alertState = 'countdown';
-    this.countdownRemaining = duration;
-
-    // Create the temporary alert event
-    this.activeAlert = {
-      id: Math.random().toString(36).substr(2, 9),
-      timestamp: new Date().toISOString(),
-      type,
-      confidence,
-      dismissed: false,
-    };
-
-    this.emitStateChange();
-
-    // Start phone notification patterns (Vibrate & Haptics)
-    Vibration.vibrate([500, 500, 500], true); // continuous vibration
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-
-    // Setup countdown timer interval
     this.countdownTimer = setInterval(async () => {
-      this.countdownRemaining--;
-      this.emit('tick', this.countdownRemaining);
+      remaining--;
+      this.notifyState(remaining);
 
-      // Trigger a light warning haptic feedback on each tick
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-      if (this.countdownRemaining <= 0) {
+      if (remaining <= 0) {
         this.clearTimer();
-        await this.triggerSMSImmediate();
+        await this.executeEmergencyProtocol(eventId);
       }
     }, 1000);
   }
 
-  /**
-   * Triggers manual SOS, bypassing context verification.
-   */
-  async triggerManualSOS() {
-    await this.startEmergencyFlow('manual', 100);
-  }
-
-  /**
-   * Immediately dispatches the SMS alerts and stops the countdown timer.
-   */
-  async triggerSMSImmediate() {
-    if (this.alertState === 'alerting') return;
-
-    console.log('[EmergencyEngine] Countdown complete or forced. Dispatching emergency alerts...');
+  public async cancelAlert(eventId: number) {
     this.clearTimer();
-    Vibration.cancel();
-
-    this.alertState = 'alerting';
-    this.emitStateChange();
-
-    // Trigger confirmation beep on wearable if connected
-    try {
-      await bleManager.writeAlertControl(AlertControl.Confirm);
-    } catch (e) {
-      console.warn('[EmergencyEngine] Could not send confirmation code to wearable:', e);
-    }
-
-    // 1. Get location coordinates
-    console.log('[EmergencyEngine] Fetching GPS location...');
-    const location = await locationService.getCurrentLocation();
-    const fallbackLocation = !location ? await locationService.getLastKnownLocation() : null;
-    const finalLocation = location || fallbackLocation;
-
-    let mapsUrl = 'https://maps.google.com/?q=0,0'; // Default fallback
-    if (finalLocation) {
-      mapsUrl = finalLocation.mapsUrl;
-      if (this.activeAlert) {
-        this.activeAlert.location = {
-          latitude: finalLocation.latitude,
-          longitude: finalLocation.longitude,
-          mapsUrl: finalLocation.mapsUrl,
-        };
-      }
-    }
-
-    // 2. Fetch emergency contacts
-    const contacts = await storageService.getContacts();
-
-    if (contacts.length === 0) {
-      console.warn('[EmergencyEngine] No emergency contacts configured to send SMS!');
-    } else {
-      // 3. Open SMS composer with contacts & prefilled message
-      console.log(`[EmergencyEngine] Opening SMS composer for ${contacts.length} contacts...`);
-      await smsService.sendToAllContacts(contacts, mapsUrl);
-    }
-
-    // 4. Save alert event to storage history
-    if (this.activeAlert) {
-      await storageService.addAlertEvent(this.activeAlert);
-    }
-
-    this.emitStateChange();
+    this.stopAlarm();
+    this.state = 'CANCELLED';
+    this.notifyState();
     
-    // Play an continuous alert haptic pattern to get attention
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    await dbService.updateEventOutcome(eventId, 'cancelled', 'User cancelled alert');
+    
+    setTimeout(() => {
+      this.state = 'IDLE';
+      this.notifyState();
+    }, 3000);
   }
 
-  /**
-   * Cancel the current alert (resets safety status back to normal).
-   */
-  async cancelAlert() {
-    console.log('[EmergencyEngine] Emergency alert cancelled by user');
+  public async forceEmergency(eventId: number) {
     this.clearTimer();
-    Vibration.cancel();
+    await this.executeEmergencyProtocol(eventId);
+  }
 
-    if (this.activeAlert) {
-      this.activeAlert.dismissed = true;
-      if (this.alertState === 'alerting') {
-        // If alert was already dispatched, save it to history as dismissed/cancelled
-        // Storage will record that it was sent but user marked it safe
-        await storageService.dismissAlert(this.activeAlert.id);
+  private async executeEmergencyProtocol(eventId: number) {
+    this.state = 'EMERGENCY';
+    this.notifyState();
+
+    // 1. Local Alarm
+    await this.playAlarm();
+
+    // 2. Location Snapshot
+    let locationStr = 'Location Unavailable';
+    let mapUrl = '';
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+        mapUrl = `https://maps.google.com/?q=${loc.coords.latitude},${loc.coords.longitude}`;
+        
+        // Try reverse geocode
+        const geocode = await Location.reverseGeocodeAsync({
+          latitude: loc.coords.latitude,
+          longitude: loc.coords.longitude
+        });
+        
+        if (geocode.length > 0) {
+          const addr = geocode[0];
+          locationStr = `${addr.street ?? ''} ${addr.city ?? ''}, ${addr.region ?? ''}`;
+        } else {
+          locationStr = 'Approximate Location';
+        }
+
+        // Update event record with location
+        // We'd ideally fetch the event, update lat/lng and label
+      }
+    } catch (e) {
+      console.warn('Failed to get location for emergency', e);
+    }
+
+    // 3. Notify Contacts
+    const contacts = await dbService.getAllContacts();
+    const phoneNumbers = contacts.map(c => c.phone);
+    
+    const message = `🚨 EMERGENCY ALERT from SafeBand\nPossible emergency detected at:\n${locationStr}\n${mapUrl}\n\nTime: ${new Date().toLocaleString()}\n\nTo confirm you received this: reply OK`;
+
+    if (phoneNumbers.length > 0) {
+      const isAvailable = await SMS.isAvailableAsync();
+      if (isAvailable) {
+        // Note: In a real background scenario, this would use a backend API (Twilio) 
+        // to send SMS automatically since iOS/Android prevent fully silent SMS from apps.
+        // For Expo, this opens the SMS composer if in foreground.
+        console.log("Mocking Background SMS/VOIP to:", phoneNumbers, "Message:", message);
+        // await SMS.sendSMSAsync(phoneNumbers, message);
+      } else {
+        console.log("SMS not available, falling back to VOIP mock...");
       }
     }
 
-    // Reset bracelet alarm status
-    try {
-      await bleManager.writeAlertControl(AlertControl.Reset);
-    } catch (e) {
-      console.warn('[EmergencyEngine] Could not write reset command to wearable:', e);
-    }
-
-    this.alertState = 'idle';
-    this.countdownRemaining = 0;
-    this.activeAlert = null;
-    this.emitStateChange();
+    // 4. Sensor Log Upload (Mock)
+    console.log(`Mocking Sensor Log Upload for Event ID: ${eventId}`);
   }
 
-  // ─── Helpers ──────────────────────────────────────────────────────────────
+  private notifyState(remaining?: number) {
+    if (this.onStateChangeCallback) {
+      this.onStateChangeCallback(this.state, remaining);
+    }
+  }
 
   private clearTimer() {
     if (this.countdownTimer) {
@@ -236,23 +127,33 @@ class EmergencyEngine extends TinyEmitter {
     }
   }
 
-  private emitStateChange() {
-    this.emit('stateChange', {
-      state: this.alertState,
-      remaining: this.countdownRemaining,
-      activeAlert: this.activeAlert,
-    });
+  private startHaptics() {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
   }
 
-  // Getters for context consumption
-  getState() {
-    return {
-      state: this.alertState,
-      remaining: this.countdownRemaining,
-      activeAlert: this.activeAlert,
-    };
+  private async playAlarm() {
+    try {
+      if (!this.soundObject) {
+        const { sound } = await Audio.Sound.createAsync(
+          require('../../assets/alarm.mp3'),
+          { shouldPlay: true, isLooping: true, volume: 1.0 }
+        );
+        this.soundObject = sound;
+      } else {
+        await this.soundObject.playAsync();
+      }
+    } catch (e) {
+      console.warn("Could not play alarm sound. Ensure assets/alarm.mp3 exists.", e);
+    }
+  }
+
+  private async stopAlarm() {
+    if (this.soundObject) {
+      await this.soundObject.stopAsync();
+      await this.soundObject.unloadAsync();
+      this.soundObject = null;
+    }
   }
 }
 
-const emergencyEngine = new EmergencyEngine();
-export default emergencyEngine;
+export const emergencyEngine = new EmergencyEngine();
